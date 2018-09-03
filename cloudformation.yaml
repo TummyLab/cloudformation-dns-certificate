@@ -17,7 +17,7 @@ Resources:
           O='PENDING_VALIDATION'\nP='ValidationStatus'\nQ='Name'\nR='Type'\nS='Value'\n\
           T='ResourceProperties'\nU='FAILED'\nV='None'\nimport time,boto3,hashlib,json,copy,logging\n\
           from botocore.vendored import requests\nacm=boto3.client('acm')\nl=logging.getLogger()\n\
-          l.setLevel(logging.INFO)\ndef send(event):\n\tl.info(event);requests.put(event['ResponseURL'],json=event)\n\
+          l.setLevel(logging.INFO)\ndef send(event):\n\tl.info(event);resp=requests.put(event['ResponseURL'],data=json.dumps(event));l.info(resp)\n\
           def create_cert(props,i_token):\n\ta=copy.copy(props);del a['ServiceToken']\n\
           \tif B in props:del a[B]\n\tif D in props:\n\t\tif props[D]==M:\n\t\t\t\
           try:\n\t\t\t\tfor name in set([props[H]]+props.get('SubjectAlternativeNames',[])):get_zone_for(name,props)\n\

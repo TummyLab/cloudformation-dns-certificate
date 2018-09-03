@@ -26,7 +26,7 @@ acm=boto3.client('acm')
 l=logging.getLogger()
 l.setLevel(logging.INFO)
 def send(event):
-	l.info(event);requests.put(event['ResponseURL'],json=event)
+	l.info(event);resp=requests.put(event['ResponseURL'],data=json.dumps(event));l.info(resp)
 def create_cert(props,i_token):
 	a=copy.copy(props);del a['ServiceToken']
 	if B in props:del a[B]
