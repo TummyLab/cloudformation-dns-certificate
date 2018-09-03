@@ -68,16 +68,7 @@
                                     "Effect": "Allow",
                                     "Resource": [
                                         {
-                                            "Fn::Join": [
-                                                "",
-                                                [
-                                                    "arn:aws:acm:*:",
-                                                    {
-                                                        "Ref": "AWS::AccountId"
-                                                    },
-                                                    ":certificate/*"
-                                                ]
-                                            ]
+                                            "Fn::Sub": "arn:aws:acm:*:${AWS::AccountId}:certificate/*"
                                         }
                                     ]
                                 },
@@ -103,15 +94,7 @@
                             "Version": "2012-10-17"
                         },
                         "PolicyName": {
-                            "Fn::Join": [
-                                "",
-                                [
-                                    {
-                                        "Ref": "AWS::StackName"
-                                    },
-                                    "CustomAcmCertificateLambdaExecutionPolicy"
-                                ]
-                            ]
+                            "Fn::Sub": "${AWS::StackName}-CustomAcmCertificateLambdaExecutionPolicy"
                         }
                     }
                 ]

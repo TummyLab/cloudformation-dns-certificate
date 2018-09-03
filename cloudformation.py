@@ -1,4 +1,4 @@
-from troposphere import Template, Join, AWS_STACK_NAME, Ref, AWS_ACCOUNT_ID, GetAtt, Output
+from troposphere import Template, Sub, Ref, GetAtt, Output
 import troposphere.iam as iam
 import troposphere.awslambda as awslambda
 from awacs.aws import PolicyDocument, Statement, Allow, Action, Principal
@@ -28,7 +28,7 @@ def create_template():
             'arn:aws:iam::aws:policy/service-role/AWSLambdaRole'
         ],
         Policies=[iam.Policy('CustomAcmCertificateLambdaPolicy',
-            PolicyName=Join('', [Ref(AWS_STACK_NAME), 'CustomAcmCertificateLambdaExecutionPolicy']),
+            PolicyName=Sub('${AWS::StackName}-CustomAcmCertificateLambdaExecutionPolicy'),
             PolicyDocument=PolicyDocument(
                 Version='2012-10-17',
                 Statement=[
@@ -41,7 +41,7 @@ def create_template():
                             Action('acm', 'RemoveTagsFromCertificate'),
                             Action('acm', 'RequestCertificate')
                         ],
-                        Resource=[Join('', ['arn:aws:acm:*:', Ref(AWS_ACCOUNT_ID), ':certificate/*'])]
+                        Resource=[Sub('arn:aws:acm:*:${AWS::AccountId}:certificate/*')]
                     ),
                     Statement(
                         Effect=Allow,
