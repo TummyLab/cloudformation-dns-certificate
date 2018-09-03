@@ -22,12 +22,11 @@ U='FAILED'
 V='None'
 import time,boto3,hashlib,json,copy,logging
 from botocore.vendored import requests
-acm=boto3.client('acm')
 l=logging.getLogger()
 l.setLevel(logging.INFO)
 def send(event):
 	l.info(event);resp=requests.put(event['ResponseURL'],data=json.dumps(event));l.info(resp)
-def create_cert(props,i_token):
+def create_cert(acm,props,i_token):
 	a=copy.copy(props);del a['ServiceToken']
 	if B in props:del a[B]
 	if D in props:
@@ -38,7 +37,7 @@ def create_cert(props,i_token):
 			del a[I]
 		elif props[D]=='EMAIL':del a[D]
 	return acm.request_certificate(IdempotencyToken=i_token,**a)['CertificateArn']
-def add_tags(arn,props):
+def add_tags(acm,arn,props):
 	if B in props:acm.add_tags_to_certificate(CertificateArn=arn,Tags=props[B])
 def get_zone_for(name,props):
 	name=name.rstrip(E);hosted_zones={v[H].rstrip(E):v['HostedZoneId']for v in(props[I])};components=name.split(E)
@@ -46,7 +45,7 @@ def get_zone_for(name,props):
 		if E.join(components)in hosted_zones:return hosted_zones[E.join(components)]
 		components=components[1:]
 	raise RuntimeError('Validation opts missing (%s)'%str(name))
-def validate(arn,props):
+def validate(acm,arn,props):
 	if D in props and props[D]==M:
 		all_records_created=False
 		while not all_records_created:
@@ -64,7 +63,7 @@ def replace_cert(event):
 	new=copy.copy(event[T])
 	if B in new:del new[B]
 	return old!=new
-def wait_for_issuance(arn,context):
+def wait_for_issuance(acm,arn,context):
 	while context.get_remaining_time_in_millis()/1000>30:
 		certificate=acm.describe_certificate(CertificateArn=arn)[N];l.info(certificate)
 		if certificate[C]=='ISSUED':return True
@@ -78,10 +77,10 @@ def reinvoke(event,context):
 def handler(event,context):
 	l.info(event)
 	try:
-		i_token=hashlib.new('md5',(event['RequestId']+event['StackId']).encode()).hexdigest();props=event[T]
+		i_token=hashlib.new('md5',(event['RequestId']+event['StackId']).encode()).hexdigest();props=event[T];acm=boto3.client('acm',region_name=props.pop('Region',None))
 		if event[K]=='Create':
-			event[A]=V;event[A]=create_cert(props,i_token);add_tags(event[A],props);validate(event[A],props)
-			if wait_for_issuance(event[A],context):
+			event[A]=V;event[A]=create_cert(acm,props,i_token);add_tags(acm,event[A],props);validate(acm,event[A],props)
+			if wait_for_issuance(acm,event[A],context):
 				event[C]=L;return send(event)
 			else:return reinvoke(event,context)
 		elif event[K]=='Delete':
@@ -89,11 +88,11 @@ def handler(event,context):
 			event[C]=L;return send(event)
 		elif event[K]=='Update':
 			if replace_cert(event):
-				event[A]=create_cert(props,i_token);add_tags(event[A],props);validate(event[A],props)
-				if not wait_for_issuance(event[A],context):return reinvoke(event,context)
+				event[A]=create_cert(acm,props,i_token);add_tags(acm,event[A],props);validate(acm,event[A],props)
+				if not wait_for_issuance(acm,event[A],context):return reinvoke(event,context)
 			else:
 				if B in event[J]:acm.remove_tags_from_certificate(CertificateArn=event[A],Tags=event[J][B])
-				add_tags(event[A],props)
+				add_tags(acm,event[A],props)
 			event[C]=L;return send(event)
 		else:raise RuntimeError('Unknown RequestType')
 	except Exception as ex:

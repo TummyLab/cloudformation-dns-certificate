@@ -13,8 +13,6 @@ import copy
 import logging
 from botocore.vendored import requests
 
-acm = boto3.client('acm')
-
 l = logging.getLogger()
 l.setLevel(logging.INFO)
 
@@ -26,7 +24,7 @@ def send(event):
 
 
 
-def create_cert(props, i_token):
+def create_cert(acm, props, i_token):
     a = copy.copy(props)
 
     del a['ServiceToken']
@@ -54,7 +52,7 @@ def create_cert(props, i_token):
     )['CertificateArn']
 
 
-def add_tags(arn, props):
+def add_tags(acm, arn, props):
     if 'Tags' in props:
         acm.add_tags_to_certificate(CertificateArn=arn, Tags=props['Tags'])
 
@@ -73,7 +71,7 @@ def get_zone_for(name, props):
 
     raise RuntimeError('Validation opts missing (%s)' % str(name))
 
-def validate(arn, props):
+def validate(acm, arn, props):
     if 'ValidationMethod' in props and props['ValidationMethod'] == 'DNS':
 
         all_records_created = False
@@ -128,7 +126,7 @@ def replace_cert(event):
     return old != new
 
 
-def wait_for_issuance(arn, context):
+def wait_for_issuance(acm, arn, context):
     while (context.get_remaining_time_in_millis() / 1000) > 30:
 
         certificate = acm.describe_certificate(CertificateArn=arn)['Certificate']
@@ -164,13 +162,15 @@ def handler(event, context):
         i_token = hashlib.new('md5', (event['RequestId'] + event['StackId']).encode()).hexdigest()
         props = event['ResourceProperties']
 
+        acm = boto3.client('acm', region_name=props.pop('Region', None))
+
         if event['RequestType'] == 'Create':
             event['PhysicalResourceId'] = 'None'
-            event['PhysicalResourceId'] = create_cert(props, i_token)
-            add_tags(event['PhysicalResourceId'], props)
-            validate(event['PhysicalResourceId'], props)
+            event['PhysicalResourceId'] = create_cert(acm, props, i_token)
+            add_tags(acm, event['PhysicalResourceId'], props)
+            validate(acm, event['PhysicalResourceId'], props)
 
-            if wait_for_issuance(event['PhysicalResourceId'], context):
+            if wait_for_issuance(acm, event['PhysicalResourceId'], context):
                 event['Status'] = 'SUCCESS'
                 return send(event)
             else:
@@ -183,20 +183,19 @@ def handler(event, context):
             return send(event)
 
         elif event['RequestType'] == 'Update':
-
             if replace_cert(event):
-                event['PhysicalResourceId'] = create_cert(props, i_token)
-                add_tags(event['PhysicalResourceId'], props)
-                validate(event['PhysicalResourceId'], props)
+                event['PhysicalResourceId'] = create_cert(acm, props, i_token)
+                add_tags(acm, event['PhysicalResourceId'], props)
+                validate(acm, event['PhysicalResourceId'], props)
 
-                if not wait_for_issuance(event['PhysicalResourceId'], context):
+                if not wait_for_issuance(acm, event['PhysicalResourceId'], context):
                     return reinvoke(event, context)
             else:
                 if 'Tags' in event['OldResourceProperties']:
                     acm.remove_tags_from_certificate(CertificateArn=event['PhysicalResourceId'],
                                                      Tags=event['OldResourceProperties']['Tags'])
 
-                add_tags(event['PhysicalResourceId'], props)
+                add_tags(acm, event['PhysicalResourceId'], props)
 
             event['Status'] = 'SUCCESS'
             return send(event)

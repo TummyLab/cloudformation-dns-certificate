@@ -1,4 +1,4 @@
-from troposphere import Template, Join, AWS_STACK_NAME, Ref, AWS_REGION, AWS_ACCOUNT_ID, GetAtt, Output
+from troposphere import Template, Join, AWS_STACK_NAME, Ref, AWS_ACCOUNT_ID, GetAtt, Output
 import troposphere.iam as iam
 import troposphere.awslambda as awslambda
 from awacs.aws import PolicyDocument, Statement, Allow, Action, Principal
@@ -41,7 +41,7 @@ def create_template():
                             Action('acm', 'RemoveTagsFromCertificate'),
                             Action('acm', 'RequestCertificate')
                         ],
-                        Resource=[Join('', ['arn:aws:acm:', Ref(AWS_REGION), ':', Ref(AWS_ACCOUNT_ID), ':certificate/*'])]
+                        Resource=[Join('', ['arn:aws:acm:*:', Ref(AWS_ACCOUNT_ID), ':certificate/*'])]
                     ),
                     Statement(
                         Effect=Allow,
@@ -91,7 +91,8 @@ def create_template():
         Tags=[{
             'Key': 'Name',
             'Value': 'Example Certificate'
-        }]
+        }],
+        Region='us-east-1'
     ))
 
     template.add_output(Output(
