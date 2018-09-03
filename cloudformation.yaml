@@ -21,16 +21,16 @@ Resources:
           def create_cert(props,i_token):\n\ta=copy.copy(props);del a['ServiceToken']\n\
           \tif B in props:del a[B]\n\tif D in props:\n\t\tif props[D]==M:\n\t\t\t\
           try:\n\t\t\t\tfor name in set([props[H]]+props.get('SubjectAlternativeNames',[])):get_zone_for(name,props)\n\
-          \t\t\texcept KeyError:raise RuntimeError('DomainValidationOptions missing')\n\
-          \t\t\tdel a[I]\n\t\telif props[D]=='EMAIL':del a[D]\n\treturn acm.request_certificate(IdempotencyToken=i_token,**a)['CertificateArn']\n\
+          \t\t\texcept KeyError:raise RuntimeError('Validation opts missing')\n\t\t\
+          \tdel a[I]\n\t\telif props[D]=='EMAIL':del a[D]\n\treturn acm.request_certificate(IdempotencyToken=i_token,**a)['CertificateArn']\n\
           def add_tags(arn,props):\n\tif B in props:acm.add_tags_to_certificate(CertificateArn=arn,Tags=props[B])\n\
           def get_zone_for(name,props):\n\tname=name.rstrip(E);hosted_zones={v[H].rstrip(E):v['HostedZoneId']for\
           \ v in(props[I])};components=name.split(E)\n\twhile len(components):\n\t\
           \tif E.join(components)in hosted_zones:return hosted_zones[E.join(components)]\n\
-          \t\tcomponents=components[1:]\n\traise RuntimeError('DomainValidationOptions\
-          \ missing for %s'%str(name))\ndef validate(arn,props):\n\tif D in props\
-          \ and props[D]==M:\n\t\tall_records_created=False\n\t\twhile not all_records_created:\n\
-          \t\t\tall_records_created=True;certificate=acm.describe_certificate(CertificateArn=arn)[N];l.info(certificate)\n\
+          \t\tcomponents=components[1:]\n\traise RuntimeError('Validation opts missing\
+          \ (%s)'%str(name))\ndef validate(arn,props):\n\tif D in props and props[D]==M:\n\
+          \t\tall_records_created=False\n\t\twhile not all_records_created:\n\t\t\t\
+          all_records_created=True;certificate=acm.describe_certificate(CertificateArn=arn)[N];l.info(certificate)\n\
           \t\t\tif certificate[C]!=O:return\n\t\t\tfor v in certificate[I]:\n\t\t\t\
           \tif P not in v or F not in v:\n\t\t\t\t\tall_records_created=False;continue\n\
           \t\t\t\trecords=[]\n\t\t\t\tif v[P]==O:records.append({'Action':'UPSERT','ResourceRecordSet':{Q:v[F][Q],R:v[F][R],'TTL':60,'ResourceRecords':[{S:v[F][S]}]}})\n\
@@ -43,8 +43,8 @@ Resources:
           \t\tif certificate[C]=='ISSUED':return True\n\t\telif certificate[C]==U:raise\
           \ RuntimeError(certificate.get('FailureReason','Failed to issue certificate'))\n\
           \t\ttime.sleep(5)\n\treturn False\ndef reinvoke(event,context):\n\tevent[G]=event.get(G,0)+1\n\
-          \tif event[G]>8:raise RuntimeError('Certificate not issued in time')\n\t\
-          l.info('Reinvoking for the %i time'%event[G]);l.info(event);boto3.client('lambda').invoke(FunctionName=context.invoked_function_arn,InvocationType='Event',Payload=json.dumps(event).encode())\n\
+          \tif event[G]>8:raise RuntimeError('Timer expired')\n\tl.info('Reinvoking\
+          \ for the %i time'%event[G]);l.info(event);boto3.client('lambda').invoke(FunctionName=context.invoked_function_arn,InvocationType='Event',Payload=json.dumps(event).encode())\n\
           def handler(event,context):\n\tl.info(event)\n\ttry:\n\t\ti_token=hashlib.new('md5',(event['RequestId']+event['StackId']).encode()).hexdigest();props=event[T]\n\
           \t\tif event[K]=='Create':\n\t\t\tevent[A]=V;event[A]=create_cert(props,i_token);add_tags(event[A],props);validate(event[A],props)\n\
           \t\t\tif wait_for_issuance(event[A],context):\n\t\t\t\tevent[C]=L;return\

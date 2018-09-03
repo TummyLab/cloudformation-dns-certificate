@@ -34,7 +34,7 @@ def create_cert(props,i_token):
 		if props[D]==M:
 			try:
 				for name in set([props[H]]+props.get('SubjectAlternativeNames',[])):get_zone_for(name,props)
-			except KeyError:raise RuntimeError('DomainValidationOptions missing')
+			except KeyError:raise RuntimeError('Validation opts missing')
 			del a[I]
 		elif props[D]=='EMAIL':del a[D]
 	return acm.request_certificate(IdempotencyToken=i_token,**a)['CertificateArn']
@@ -45,7 +45,7 @@ def get_zone_for(name,props):
 	while len(components):
 		if E.join(components)in hosted_zones:return hosted_zones[E.join(components)]
 		components=components[1:]
-	raise RuntimeError('DomainValidationOptions missing for %s'%str(name))
+	raise RuntimeError('Validation opts missing (%s)'%str(name))
 def validate(arn,props):
 	if D in props and props[D]==M:
 		all_records_created=False
@@ -75,7 +75,7 @@ def wait_for_issuance(arn,context):
 	return False
 def reinvoke(event,context):
 	event[G]=event.get(G,0)+1
-	if event[G]>8:raise RuntimeError('Certificate not issued in time')
+	if event[G]>8:raise RuntimeError('Timer expired')
 	l.info('Reinvoking for the %i time'%event[G]);l.info(event);boto3.client('lambda').invoke(FunctionName=context.invoked_function_arn,InvocationType='Event',Payload=json.dumps(event).encode())
 def handler(event,context):
 	l.info(event)

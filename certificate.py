@@ -41,7 +41,7 @@ def create_cert(props, i_token):
                 for name in set([props['DomainName']] + props.get('SubjectAlternativeNames', [])):
                     get_zone_for(name, props)
             except KeyError:
-                raise RuntimeError('DomainValidationOptions missing')
+                raise RuntimeError('Validation opts missing')
 
             del a['DomainValidationOptions']
 
@@ -71,8 +71,7 @@ def get_zone_for(name, props):
 
         components = components[1:]
 
-    raise RuntimeError('DomainValidationOptions missing for %s' % str(name))
-
+    raise RuntimeError('Validation opts missing (%s)' % str(name))
 
 def validate(arn, props):
     if 'ValidationMethod' in props and props['ValidationMethod'] == 'DNS':
@@ -152,7 +151,7 @@ def reinvoke(event, context):
     # Only continue to reinvoke for 8 iterations
     event['I'] = event.get('I', 0) + 1
     if event['I'] > 8:
-        raise RuntimeError('Certificate not issued in time')
+        raise RuntimeError('Timer expired')
 
     l.info('Reinvoking for the %i time' % event['I'])
     l.info(event)
