@@ -1,3 +1,4 @@
 troposphere
 awacs
 boto3
+python-minifier
