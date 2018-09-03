@@ -92,26 +92,22 @@ def validate(arn, props):
                     all_records_created = False
                     continue
 
-                records = []
                 if v['ValidationStatus'] == 'PENDING_VALIDATION':
-                    records.append({
-                        'Action': 'UPSERT',
-                        'ResourceRecordSet': {
-                            'Name': v['ResourceRecord']['Name'],
-                            'Type': v['ResourceRecord']['Type'],
-                            'TTL': 60,
-                            'ResourceRecords': [{
-                                'Value': v['ResourceRecord']['Value']
-                            }]
-                        }
-                    })
-
-                if records:
                     response = boto3.client('route53').change_resource_record_sets(
                         HostedZoneId=get_zone_for(v['DomainName'], props),
                         ChangeBatch={
                             'Comment': 'Domain validation for %s' % arn,
-                            'Changes': records
+                            'Changes': [{
+                                'Action': 'UPSERT',
+                                'ResourceRecordSet': {
+                                    'Name': v['ResourceRecord']['Name'],
+                                    'Type': v['ResourceRecord']['Type'],
+                                    'TTL': 60,
+                                    'ResourceRecords': [{
+                                        'Value': v['ResourceRecord']['Value']
+                                    }]
+                                }
+                            }]
                         }
                     )
 

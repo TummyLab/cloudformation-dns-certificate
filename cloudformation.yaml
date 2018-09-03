@@ -33,12 +33,11 @@ Resources:
           all_records_created=True;certificate=acm.describe_certificate(CertificateArn=arn)[N];l.info(certificate)\n\
           \t\t\tif certificate[C]!=O:return\n\t\t\tfor v in certificate[I]:\n\t\t\t\
           \tif P not in v or F not in v:\n\t\t\t\t\tall_records_created=False;continue\n\
-          \t\t\t\trecords=[]\n\t\t\t\tif v[P]==O:records.append({'Action':'UPSERT','ResourceRecordSet':{Q:v[F][Q],R:v[F][R],'TTL':60,'ResourceRecords':[{S:v[F][S]}]}})\n\
-          \t\t\t\tif records:\n\t\t\t\t\tresponse=boto3.client('route53').change_resource_record_sets(HostedZoneId=get_zone_for(v[H],props),ChangeBatch={'Comment':'Domain\
-          \ validation for %s'%arn,'Changes':records});l.info(response)\n\t\t\ttime.sleep(1)\n\
-          def replace_cert(event):\n\told=copy.copy(event[J])\n\tif B in old:del old[B]\n\
-          \tnew=copy.copy(event[T])\n\tif B in new:del new[B]\n\treturn old!=new\n\
-          def wait_for_issuance(arn,context):\n\twhile context.get_remaining_time_in_millis()/1000>30:\n\
+          \t\t\t\tif v[P]==O:\n\t\t\t\t\tresponse=boto3.client('route53').change_resource_record_sets(HostedZoneId=get_zone_for(v[H],props),ChangeBatch={'Comment':'Domain\
+          \ validation for %s'%arn,'Changes':[{'Action':'UPSERT','ResourceRecordSet':{Q:v[F][Q],R:v[F][R],'TTL':60,'ResourceRecords':[{S:v[F][S]}]}}]});l.info(response)\n\
+          \t\t\ttime.sleep(1)\ndef replace_cert(event):\n\told=copy.copy(event[J])\n\
+          \tif B in old:del old[B]\n\tnew=copy.copy(event[T])\n\tif B in new:del new[B]\n\
+          \treturn old!=new\ndef wait_for_issuance(arn,context):\n\twhile context.get_remaining_time_in_millis()/1000>30:\n\
           \t\tcertificate=acm.describe_certificate(CertificateArn=arn)[N];l.info(certificate)\n\
           \t\tif certificate[C]=='ISSUED':return True\n\t\telif certificate[C]==U:raise\
           \ RuntimeError(certificate.get('FailureReason','Failed to issue certificate'))\n\

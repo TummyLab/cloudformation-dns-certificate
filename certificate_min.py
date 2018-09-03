@@ -55,10 +55,8 @@ def validate(arn,props):
 			for v in certificate[I]:
 				if P not in v or F not in v:
 					all_records_created=False;continue
-				records=[]
-				if v[P]==O:records.append({'Action':'UPSERT','ResourceRecordSet':{Q:v[F][Q],R:v[F][R],'TTL':60,'ResourceRecords':[{S:v[F][S]}]}})
-				if records:
-					response=boto3.client('route53').change_resource_record_sets(HostedZoneId=get_zone_for(v[H],props),ChangeBatch={'Comment':'Domain validation for %s'%arn,'Changes':records});l.info(response)
+				if v[P]==O:
+					response=boto3.client('route53').change_resource_record_sets(HostedZoneId=get_zone_for(v[H],props),ChangeBatch={'Comment':'Domain validation for %s'%arn,'Changes':[{'Action':'UPSERT','ResourceRecordSet':{Q:v[F][Q],R:v[F][R],'TTL':60,'ResourceRecords':[{S:v[F][S]}]}}]});l.info(response)
 			time.sleep(1)
 def replace_cert(event):
 	old=copy.copy(event[J])
